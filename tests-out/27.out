@@ -1,0 +1,4 @@
+tests-out/output27
+/bin/rm -f tests-out/output27
+/bin/echo -e This line is not completely cprinted.
+This line is not completely exit

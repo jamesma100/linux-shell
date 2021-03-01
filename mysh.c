@@ -4,17 +4,17 @@
 #include <string.h>
 #include <stdbool.h>
 #include <sys/wait.h>
+#include <fcntl.h>
 
 FILE *stdin;
 FILE *fp;
 
+// this function runs an individual line containing a user command
 // takes in string of user command, parses arguments, and calls execv
 void handle_command(const char *user_command){
-//    write(STDOUT_FILENO, user_command, strlen(user_command));
-    
+    int fd; // file descriptor for file to redirect to
     // make duplicate of command
-    char *dup_command = strdup(user_command);  
-    printf("dup command: %s\n", dup_command);  
+    char *dup_command = strdup(user_command);
     // remove newline
     for (int i = 0; i < strlen(dup_command); i++) {
         if (dup_command[i] == '\n') {
@@ -29,17 +29,30 @@ void handle_command(const char *user_command){
             
             // detect redirection
             int start_of_filename = 0;
+            bool redirect_detected = false;
             for (int i = 0; i < strlen(dup_command); i++) {
                 if (dup_command[i] == '>') {
                     // check for multiple >'s
-                    if (i+1 < strlen(dup_command)) {
-                        if (dup_command[i+1] == '>') {
-                             write(STDERR_FILENO, "Redirection misformatted.\n", 26);
-                        }
+                    if (redirect_detected) {
+                         write(STDERR_FILENO, "Redirection misformatted.\n", 26);
+                    } else {
+                        redirect_detected = true;
                     }
-                    start_of_filename = i+1;
-                    break;
                 }
+                // skip spaces and tabs
+                else if (dup_command[i] == ' ' || dup_command[i] == '\t') {
+                    continue;
+                } 
+                // find potential beginning of filename
+                else {
+                    // if after > symbol, mark as beginning of filename
+                    if (redirect_detected) {
+                        start_of_filename = i;
+                        break;
+                    } else {
+                        continue;
+                    }
+                }   
             }
             char filename[128];
             int i;
@@ -48,7 +61,22 @@ void handle_command(const char *user_command){
                 filename[i-start_of_filename] = dup_command[i];
             }
             filename[i] = '\0';
-            
+            // attempt to open file
+            fd = open(filename, O_RDWR);
+            if (fd == -1) {
+                write(STDERR_FILENO, "Cannot write to file ", 21);
+                write(STDERR_FILENO, filename, strlen(filename));
+                write(STDERR_FILENO, "\n", 1);
+            }
+            int old_stdout = dup(STDOUT_FILENO);
+            if (old_stdout == -1) {
+                return;
+            }
+            int dup2_ret = dup2(fd, STDOUT_FILENO);
+            if (dup2_ret == -1) {
+                return;
+            }
+            // beginning of argument parsing with strtok
             char *argv[100];
             char *tok = strtok(dup_command, " ");
             int arg_index = 0; 
