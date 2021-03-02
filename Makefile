@@ -8,10 +8,10 @@ CC=gcc
 CFLAGS=-Wall -Werror -g
 
 # Main build command
-mysh: mysh.c
-	$(CC) $(CFLAGS) -o mysh mysh.c
+mysh: mysh.c myalias.c
+	$(CC) $(CFLAGS) -o mysh mysh.c myalias.c -I.
 
 # .PHONY means this command does not actually produce an output file
 .PHONY: clean
 clean:
-	rm -rf mysh
+	rm -rf mysh myalias

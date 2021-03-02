@@ -7,6 +7,8 @@
 #include <fcntl.h>
 #include <errno.h>
 
+#include "myalias.h"
+
 FILE *stdin;
 FILE *fp1;
 FILE *fp2;
@@ -148,6 +150,11 @@ void handle_command(const char *user_command) {
 }
 
 int main(int argc, char *argv[]) {
+    // set up struct for aliases
+    struct linked_list* aliases = malloc(sizeof(struct linked_list));
+    aliases->head = NULL;
+    aliases->tail = NULL;
+
     // run in interactive mode
     if (argc == 1) {
         fp1 = stdin;
@@ -167,7 +174,7 @@ int main(int argc, char *argv[]) {
      // run in batch mode
     else if (argc == 2) {
         fp1 = fopen(argv[1], "r");
-        // batch file invalid
+        // batch file is invalid
         if (fp1 == NULL) {
             write(STDERR_FILENO, "Error: Cannot open file ", 24);
             write(STDERR_FILENO, argv[1], strlen(argv[1]));
