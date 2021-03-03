@@ -32,23 +32,19 @@ void handle_command(const char *user_command) {
     // case: valid command
     if (strlen(dup_command) > 0) {
         if (strcmp(dup_command, "alias") == 0) {
-            //printf("print all alaises\n");
+            free(dup_command);
             print_list(aliases);
             return;
         }
         // user types <alias-name>
-        if (search(aliases, dup_command) != NULL) {      
-            //printf("alias exists for command\n");
+        if (search(aliases, dup_command) != NULL) {
             char* replacement = (char*)search(aliases, dup_command)->value;
-            //printf("replacement command: %s\n", replacement);
-            //printf("search call finished\n");
-            dup_command = realloc(dup_command, strlen(replacement)*sizeof(char)+1);
-            //printf("dup_command reallocated\n");
+            int replace_len = strlen(replacement);
+            dup_command = realloc(dup_command, replace_len*sizeof(char)+1);
             strcpy(dup_command, replacement);
-        }   
+        }
         char *argv_alias[100];
         bool alias_detected = false;
-    
         if (strncmp(dup_command, "alias", 5) == 0) {
             alias_detected = true;
         }
@@ -64,7 +60,6 @@ void handle_command(const char *user_command) {
                 argv_alias[arg_alias_index++] = tok_alias;
             }
             argv_alias[arg_alias_index] = NULL;
-            
             // user types alias <word>: prints alias and replacement
             if (arg_alias_index == 1) {
                 if (search(aliases, argv_alias[0]) != NULL) {
@@ -73,9 +68,11 @@ void handle_command(const char *user_command) {
                     write(STDOUT_FILENO, " ", 1);
                     write(STDOUT_FILENO, replace, strlen(replace));
                     write(STDOUT_FILENO, "\n", 1);
-                } 
+                  //  free(replace);
+                }
+                free(dup_command);
                 return;
-            } 
+            }
             if (strcmp(argv_alias[0], "alias") == 0) {
                 write(STDERR_FILENO, "alias: Too dangerous to alias that.\n", 36);
                 return;
@@ -97,7 +94,6 @@ void handle_command(const char *user_command) {
             return;
         }
         if (strncmp(dup_command, "unalias", 7) == 0) {
-            //printf("unalias detected\n");
             char *tok_unalias = strtok(dup_command, " \t");
             if ((tok_unalias = strtok(NULL, " \t")) == NULL) {
                 // no alias name specified
@@ -106,13 +102,11 @@ void handle_command(const char *user_command) {
             }
             char *argv_unalias[100];
             int arg_unalias_index = 0;
-            argv_unalias[arg_unalias_index++] = tok_unalias; // store alias name
+            argv_unalias[arg_unalias_index++] = tok_unalias;
             if ((tok_unalias = strtok(NULL, "")) != NULL) {
-                write(STDERR_FILENO, "unalias: Incorrect number of arguments.\n", 40); 
+                write(STDERR_FILENO, "unalias: Incorrect number of arguments.\n", 40);
                 return;
             }
-            
-            //printf("tok_unalias: %s\n", tok_unalias);
             if (delete(aliases, argv_unalias[0]) == NULL) {
                 return;
             }
@@ -172,13 +166,11 @@ void handle_command(const char *user_command) {
                 write(STDERR_FILENO, filename, strlen(filename));
                 write(STDERR_FILENO, "\n", 1);
             }
-            
             old_stdout = dup(STDOUT_FILENO);
             if (old_stdout == -1) {
                 printf("old stdout failed\n");
                 return;
             }
-        
             int dup2_ret = dup2(fileno(fp2), STDOUT_FILENO);
             if (dup2_ret == -1) {
                 printf("dup2 return failed\n");
@@ -195,7 +187,6 @@ void handle_command(const char *user_command) {
             write(STDERR_FILENO, "Redirection misformatted.\n", 26);
         }
         int arg_index = 0;
-        
         // parse command, add to argv array
         while (tok != NULL) {
             argv[arg_index] = tok;
@@ -207,26 +198,20 @@ void handle_command(const char *user_command) {
 
         pid_t pid = fork();
         if (pid == 0) {
-            //printf("I'm a child with pid %d.\n", getpid());
             if (execv(argv[0], argv) == -1) {
                 write(STDERR_FILENO, argv[0], strlen(argv[0]));
                 write(STDERR_FILENO, ": Command not found.\n", 21);
             }
-            //printf("child: exec failed\n");
-            printf("execv returned! errno is [%d]\n",errno);
             free(dup_command);
             _exit(1);
         } else {
-            //printf("returned to parent\n");
             free(dup_command);
-            //printf("I'm a parent with pid %d.\n", getpid());
             int status;
-            waitpid(pid, &status, 0);  
+            waitpid(pid, &status, 0);
             if (redirect_detected) {
                 dup2(old_stdout, STDOUT_FILENO);
                 fclose(fp2);
             }
-            //printf("parent: child process exits\n");           
         }
     }
 }
@@ -239,7 +224,7 @@ int main(int argc, char *argv[]) {
     // run in interactive mode
     if (argc == 1) {
         fp1 = stdin;
-        char str[128]; 
+        char str[128];
         while (1) {
             write(STDOUT_FILENO, "mysh> ", 6);
             if (fgets(str, 128, fp1) != NULL) {
@@ -268,11 +253,12 @@ int main(int argc, char *argv[]) {
                     break;
                 }
                 handle_command(str);
-            }   
+            }
         }
     } else {
         write(STDERR_FILENO, "Usage: mysh [batch-file]\n", 25);
         exit(1);
     }
+    fclose(fp1);
     return 0;
 }

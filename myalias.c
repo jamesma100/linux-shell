@@ -3,17 +3,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "myalias.h"
-/*
-struct linked_list {
-    struct node *head;
-    struct node *tail;
-};
-struct node {
-    void *key;
-    void *value;
-    struct node *next;
-    struct node *prev;
-}; */
+
 void print_list(struct linked_list *list) {
     struct node* curr = list->head;
     while (curr != NULL) {
@@ -21,9 +11,10 @@ void print_list(struct linked_list *list) {
         write(STDOUT_FILENO, " ", 1);
         write(STDOUT_FILENO, (char*)(curr->value), strlen((char*)curr->value));
         write(STDOUT_FILENO, "\n", 1);
-        //printf("%s %s\n", (char*)(curr->key), (char*)(curr->value));
         curr = curr->next;
     }
+    free(curr);
+    return;
 }
 struct node* insert_to_end(struct linked_list *list, void *key, void *value) {
     struct node* new_node = (struct node*) malloc(sizeof(struct node));
@@ -32,6 +23,7 @@ struct node* insert_to_end(struct linked_list *list, void *key, void *value) {
     new_node->value = value;
     new_node->next = NULL;
     new_node->prev = NULL;
+
     // make new node the head and tail
     if (list->head == NULL) {
         list->head = new_node;
@@ -40,7 +32,7 @@ struct node* insert_to_end(struct linked_list *list, void *key, void *value) {
     } else {
         struct node* curr = list->head;
         while (curr->next != NULL) {
-            curr = curr->next;   
+            curr = curr->next;
         }
         curr->next = new_node;
         new_node->prev = curr;
@@ -52,7 +44,6 @@ struct node* insert_to_end(struct linked_list *list, void *key, void *value) {
 
 struct node* delete(struct linked_list *list, void *key) {
     struct node* curr = list->head;
-    
     // invalid list if head is NULL
     if (list->head == NULL) {
         return NULL;
@@ -62,8 +53,7 @@ struct node* delete(struct linked_list *list, void *key) {
         // reach end of w/o finding match
         if (curr->next == NULL) {
             return NULL;
-        } 
-        else {
+        } else {
             curr = curr->next;
         }
     }
@@ -77,8 +67,8 @@ struct node* delete(struct linked_list *list, void *key) {
         list->tail = curr->prev;
     } else {
         curr->next->prev = curr->prev;
-    } 
-    return curr;    
+    }
+    return curr;
 }
 
 struct node* search(struct linked_list *list, void *key) {
@@ -101,21 +91,4 @@ struct node* search(struct linked_list *list, void *key) {
     }
     return curr;
 }
-/*
-int main(int argc, char *argv[]) {
-    struct linked_list* list = malloc(sizeof(struct linked_list));
-    list->head = NULL;
-    list->tail = NULL;
-    insert_to_end(list, "apple", "red");
-    insert_to_end(list, "banana", "yellow");
-    insert_to_end(list, "grape", "purple");
-    insert_to_end(list, "orange", "orange");
-    print_list(list);
-    printf("value of search for grape: %s\n", (char*)((search(list, "grape"))->value));
-    printf("value of search for apple: %s\n", (char*)((search(list, "apple"))->value));
-    
-    //print_list(list);
-    //printf("list head key: %s\n", (char*)(list->head->key));
-    return 0;
-}
-*/
+
