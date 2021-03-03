@@ -1,7 +1,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-
+#include <unistd.h>
 #include "myalias.h"
 /*
 struct linked_list {
@@ -17,7 +17,11 @@ struct node {
 void print_list(struct linked_list *list) {
     struct node* curr = list->head;
     while (curr != NULL) {
-        printf("%s %s\n", (char*)(curr->key), (char*)(curr->value));
+        write(STDOUT_FILENO, (char*)(curr->key), strlen((char*)curr->key));
+        write(STDOUT_FILENO, " ", 1);
+        write(STDOUT_FILENO, (char*)(curr->value), strlen((char*)curr->value));
+        write(STDOUT_FILENO, "\n", 1);
+        //printf("%s %s\n", (char*)(curr->key), (char*)(curr->value));
         curr = curr->next;
     }
 }

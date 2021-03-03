@@ -32,11 +32,12 @@ void handle_command(const char *user_command) {
     // case: valid command
     if (strlen(dup_command) > 0) {
         if (strcmp(dup_command, "alias") == 0) {
+            //printf("print all alaises\n");
             print_list(aliases);
             return;
         }
-        if (search(aliases, dup_command) != NULL) {         
-            //printf("alias exists for command\n");   
+        if (search(aliases, dup_command) != NULL) {      
+            //printf("alias exists for command\n");
             char* replacement = (char*)search(aliases, dup_command)->value;
             //printf("replacement command: %s\n", replacement);
             //printf("search call finished\n");
@@ -66,10 +67,10 @@ void handle_command(const char *user_command) {
             // user types alias <word>: prints alias and replacement
             if (arg_alias_index == 1) {
                 if (search(aliases, argv_alias[0]) != NULL) {
-                    char* replace_val = (char*)(search(aliases, argv_alias[0])->value);
+                    char* replace = (char*)(search(aliases, argv_alias[0])->value);
                     write(STDOUT_FILENO, argv_alias[0], strlen(argv_alias[0]));
                     write(STDOUT_FILENO, " ", 1);
-                    write(STDOUT_FILENO, replace_val, strlen(replace_val));
+                    write(STDOUT_FILENO, replace, strlen(replace));
                     write(STDOUT_FILENO, "\n", 1);
                 } 
                 return;
@@ -78,7 +79,7 @@ void handle_command(const char *user_command) {
             if (search(aliases, argv_alias[0]) == NULL) {
                 insert_to_end(aliases, argv_alias[0], argv_alias[1]);
             } else {
-                struct node *node= search(aliases, argv_alias[0]);
+                struct node *node = search(aliases, argv_alias[0]);
                 node->value = argv_alias[1];
             }
             return;
@@ -191,9 +192,7 @@ void handle_command(const char *user_command) {
                 dup2(old_stdout, STDOUT_FILENO);
                 fclose(fp2);
             }
-            //printf("parent: child process exits\n");
-            
-            //printf("parent: child process exits.\n");
+            //printf("parent: child process exits\n");           
         }
     }
 }
@@ -218,9 +217,7 @@ int main(int argc, char *argv[]) {
                 break;
             }
         }
-    }
-     // run in batch mode
-    else if (argc == 2) {
+    } else if (argc == 2) {
         fp1 = fopen(argv[1], "r");
         // batch file is invalid
         if (fp1 == NULL) {
@@ -236,7 +233,7 @@ int main(int argc, char *argv[]) {
                 if (strncmp(command, "exit", 4) == 0) {
                     break;
                 }
-                handle_command(command);
+                handle_command(str);
             }   
         }
     } else {
