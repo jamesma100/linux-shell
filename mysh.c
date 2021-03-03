@@ -14,13 +14,15 @@ FILE *fp1;
 FILE *fp2;
 int fd;
 int old_stdout;
+struct linked_list* aliases;
+char *dup_command;
 
 // this function runs an individual line containing a user command
 // takes in string of user command, parses arguments, and calls execv
 void handle_command(const char *user_command) {
     // file descriptor for file to redirect to
     // make duplicate of command
-    char *dup_command = strdup(user_command);
+    dup_command = strdup(user_command);
     // remove newline
     for (int i = 0; i < strlen(dup_command); i++) {
         if (dup_command[i] == '\n') {
@@ -29,7 +31,60 @@ void handle_command(const char *user_command) {
     }
     // case: valid command
     if (strlen(dup_command) > 0) {
-    // detect redirection
+        if (strcmp(dup_command, "alias") == 0) {
+            print_list(aliases);
+            return;
+        }
+        if (search(aliases, dup_command) != NULL) {         
+            //printf("alias exists for command\n");   
+            char* replacement = (char*)search(aliases, dup_command)->value;
+            //printf("replacement command: %s\n", replacement);
+            //printf("search call finished\n");
+            dup_command = realloc(dup_command, strlen(replacement)*sizeof(char)+1);
+            //printf("dup_command reallocated\n");
+            strcpy(dup_command, replacement);
+        }   
+        char *argv_alias[100];
+        bool alias_detected = false;
+    
+        if (strncmp(dup_command, "alias", 5) == 0) {
+            alias_detected = true;
+        }
+        if (alias_detected) {
+            // grab alias keyword
+            char *tok_alias = strtok(dup_command, " \t");
+            // grab command
+            tok_alias = strtok(NULL, " \t");
+            int arg_alias_index = 0;
+            // set command as first argument
+            argv_alias[arg_alias_index++] = tok_alias;
+            if ((tok_alias = strtok(NULL, "")) != NULL) {
+                argv_alias[arg_alias_index++] = tok_alias;
+            }
+            argv_alias[arg_alias_index] = NULL;
+            
+            // user types alias <word>: prints alias and replacement
+            if (arg_alias_index == 1) {
+                if (search(aliases, argv_alias[0]) != NULL) {
+                    char* replace_val = (char*)(search(aliases, argv_alias[0])->value);
+                    write(STDOUT_FILENO, argv_alias[0], strlen(argv_alias[0]));
+                    write(STDOUT_FILENO, " ", 1);
+                    write(STDOUT_FILENO, replace_val, strlen(replace_val));
+                    write(STDOUT_FILENO, "\n", 1);
+                } 
+                return;
+            } 
+
+            if (search(aliases, argv_alias[0]) == NULL) {
+                insert_to_end(aliases, argv_alias[0], argv_alias[1]);
+            } else {
+                struct node *node= search(aliases, argv_alias[0]);
+                node->value = argv_alias[1];
+            }
+            return;
+        }
+
+        // detect redirection
         int start_of_filename = 0;
         bool redirect_detected = false;
         int redirect_index;
@@ -76,7 +131,6 @@ void handle_command(const char *user_command) {
             }
             filename[i] = '\0';
             // attempt to open file
-            //printf("attempt to open file %s\n", filename);
             fp2 = fopen(filename, "w");
             if (fp2 == NULL) {
                 write(STDERR_FILENO, "Cannot write to file ", 21);
@@ -101,7 +155,6 @@ void handle_command(const char *user_command) {
         if (redirect_detected) {
             dup_command[redirect_index] = '\0';
         }
-        //printf("new dup_command: %s\n", dup_command);
         char *tok = strtok(dup_command, " \t");
         if (tok == NULL && redirect_detected) {
             write(STDERR_FILENO, "Redirection misformatted.\n", 26);
@@ -110,18 +163,13 @@ void handle_command(const char *user_command) {
         
         // parse command, add to argv array
         while (tok != NULL) {
-           // printf("tok: %s\n", tok);
             argv[arg_index] = tok;
             tok = strtok(NULL, " \t");
             arg_index++;
         }
         // set last argument to NULL
         argv[arg_index] = NULL;
-        /*
-        for (int i = 0; i <= arg_index; i++) {
-            printf("argument: %s\n", argv[i]);
-            //printf("length: %lu\n", strlen(argv[i]));
-        } */
+
         pid_t pid = fork();
         if (pid == 0) {
             //printf("I'm a child with pid %d.\n", getpid());
@@ -130,10 +178,11 @@ void handle_command(const char *user_command) {
                 write(STDERR_FILENO, ": Command not found.\n", 21);
             }
             //printf("child: exec failed\n");
-            //printf("execv returned! errno is [%d]\n",errno);
+            printf("execv returned! errno is [%d]\n",errno);
             free(dup_command);
             _exit(1);
         } else {
+            //printf("returned to parent\n");
             free(dup_command);
             //printf("I'm a parent with pid %d.\n", getpid());
             int status;
@@ -151,10 +200,9 @@ void handle_command(const char *user_command) {
 
 int main(int argc, char *argv[]) {
     // set up struct for aliases
-    struct linked_list* aliases = malloc(sizeof(struct linked_list));
+    aliases = malloc(sizeof(struct linked_list));
     aliases->head = NULL;
     aliases->tail = NULL;
-
     // run in interactive mode
     if (argc == 1) {
         fp1 = stdin;

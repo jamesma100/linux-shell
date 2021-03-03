@@ -16,15 +16,10 @@ struct node {
 }; */
 void print_list(struct linked_list *list) {
     struct node* curr = list->head;
-    printf("------------------------------\n");
-    if (curr == NULL) {
-        printf("empty list\n");
-    }
     while (curr != NULL) {
-        printf("%s: %s\n", (char*)(curr->key), (char*)(curr->value));
+        printf("%s %s\n", (char*)(curr->key), (char*)(curr->value));
         curr = curr->next;
     }
-    printf("------------------------------\n");
 }
 struct node* insert_to_end(struct linked_list *list, void *key, void *value) {
     struct node* new_node = (struct node*) malloc(sizeof(struct node));
