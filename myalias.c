@@ -58,7 +58,7 @@ struct node* delete(struct linked_list *list, void *key) {
         return NULL;
     }
     // traverse list
-    while (curr->key != key) {
+    while (strcmp(curr->key, key) != 0) {
         // reach end of w/o finding match
         if (curr->next == NULL) {
             return NULL;

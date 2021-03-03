@@ -36,6 +36,7 @@ void handle_command(const char *user_command) {
             print_list(aliases);
             return;
         }
+        // user types <alias-name>
         if (search(aliases, dup_command) != NULL) {      
             //printf("alias exists for command\n");
             char* replacement = (char*)search(aliases, dup_command)->value;
@@ -75,12 +76,45 @@ void handle_command(const char *user_command) {
                 } 
                 return;
             } 
-
+            if (strcmp(argv_alias[0], "alias") == 0) {
+                write(STDERR_FILENO, "alias: Too dangerous to alias that.\n", 36);
+                return;
+            }
+            if (strcmp(argv_alias[0], "unalias") == 0) {
+                write(STDERR_FILENO, "alias: Too dangerous to alias that.\n", 36);
+                return;
+            }
+            if (strcmp(argv_alias[0], "exit") == 0) {
+                write(STDERR_FILENO, "alias: Too dangerous to alias that.\n", 36);
+                return;
+            }
             if (search(aliases, argv_alias[0]) == NULL) {
                 insert_to_end(aliases, argv_alias[0], argv_alias[1]);
             } else {
                 struct node *node = search(aliases, argv_alias[0]);
                 node->value = argv_alias[1];
+            }
+            return;
+        }
+        if (strncmp(dup_command, "unalias", 7) == 0) {
+            //printf("unalias detected\n");
+            char *tok_unalias = strtok(dup_command, " \t");
+            if ((tok_unalias = strtok(NULL, " \t")) == NULL) {
+                // no alias name specified
+                write(STDERR_FILENO, "unalias: Incorrect number of arguments.\n", 40);
+                return;
+            }
+            char *argv_unalias[100];
+            int arg_unalias_index = 0;
+            argv_unalias[arg_unalias_index++] = tok_unalias; // store alias name
+            if ((tok_unalias = strtok(NULL, "")) != NULL) {
+                write(STDERR_FILENO, "unalias: Incorrect number of arguments.\n", 40); 
+                return;
+            }
+            
+            //printf("tok_unalias: %s\n", tok_unalias);
+            if (delete(aliases, argv_unalias[0]) == NULL) {
+                return;
             }
             return;
         }
