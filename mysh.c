@@ -63,7 +63,8 @@ void handle_command(const char *user_command) {
             // user types alias <word>: prints alias and replacement
             if (arg_alias_index == 1) {
                 if (search(aliases, argv_alias[0]) != NULL) {
-                    char* replace = (char*)(search(aliases, argv_alias[0])->value);
+                    char* replace =
+                        (char*)(search(aliases, argv_alias[0])->value);
                     write(STDOUT_FILENO, argv_alias[0], strlen(argv_alias[0]));
                     write(STDOUT_FILENO, " ", 1);
                     write(STDOUT_FILENO, replace, strlen(replace));
@@ -74,22 +75,24 @@ void handle_command(const char *user_command) {
                 return;
             }
             if (strcmp(argv_alias[0], "alias") == 0) {
-                write(STDERR_FILENO, "alias: Too dangerous to alias that.\n", 36);
+                write(STDERR_FILENO,
+                    "alias: Too dangerous to alias that.\n", 36);
                 return;
             }
             if (strcmp(argv_alias[0], "unalias") == 0) {
-                write(STDERR_FILENO, "alias: Too dangerous to alias that.\n", 36);
+                write(STDERR_FILENO,
+                    "alias: Too dangerous to alias that.\n", 36);
                 return;
             }
             if (strcmp(argv_alias[0], "exit") == 0) {
-                write(STDERR_FILENO, "alias: Too dangerous to alias that.\n", 36);
+                write(STDERR_FILENO,
+                    "alias: Too dangerous to alias that.\n", 36);
                 return;
             }
             if (search(aliases, argv_alias[0]) == NULL) {
                 insert_to_end(aliases, argv_alias[0], argv_alias[1]);
             } else {
-                struct node *node = search(aliases, argv_alias[0]);
-                node->value = argv_alias[1];
+                search(aliases, argv_alias[0])->value = argv_alias[1];
             }
             return;
         }
@@ -97,17 +100,22 @@ void handle_command(const char *user_command) {
             char *tok_unalias = strtok(dup_command, " \t");
             if ((tok_unalias = strtok(NULL, " \t")) == NULL) {
                 // no alias name specified
-                write(STDERR_FILENO, "unalias: Incorrect number of arguments.\n", 40);
+                write(STDERR_FILENO,
+                    "unalias: Incorrect number of arguments.\n", 40);
+                free(dup_command);
                 return;
             }
             char *argv_unalias[100];
             int arg_unalias_index = 0;
             argv_unalias[arg_unalias_index++] = tok_unalias;
             if ((tok_unalias = strtok(NULL, "")) != NULL) {
-                write(STDERR_FILENO, "unalias: Incorrect number of arguments.\n", 40);
+                write(STDERR_FILENO,
+                    "unalias: Incorrect number of arguments.\n", 40);
+                free(dup_command);
                 return;
             }
             if (delete(aliases, argv_unalias[0]) == NULL) {
+                free(dup_command);
                 return;
             }
             return;
@@ -143,6 +151,7 @@ void handle_command(const char *user_command) {
         if (start_of_filename == 0 && redirect_detected) {
             redirect_detected = false;
             write(STDERR_FILENO, "Redirection misformatted.\n", 26);
+            free(dup_command);
             return;
         }
         // redirect detected, so extract name of file and handle FDs
@@ -154,6 +163,7 @@ void handle_command(const char *user_command) {
             for (i = start_of_filename; i < strlen(dup_command); i++) {
                 if (dup_command[i] == ' ') {
                     write(STDERR_FILENO, "Redirection misformatted.\n", 26);
+                    free(dup_command);
                     return;
                 }
                 filename[i-start_of_filename] = dup_command[i];
@@ -168,12 +178,10 @@ void handle_command(const char *user_command) {
             }
             old_stdout = dup(STDOUT_FILENO);
             if (old_stdout == -1) {
-                printf("old stdout failed\n");
                 return;
             }
             int dup2_ret = dup2(fileno(fp2), STDOUT_FILENO);
             if (dup2_ret == -1) {
-                printf("dup2 return failed\n");
                 return;
             }
         }
@@ -243,6 +251,7 @@ int main(int argc, char *argv[]) {
             write(STDERR_FILENO, "Error: Cannot open file ", 24);
             write(STDERR_FILENO, argv[1], strlen(argv[1]));
             write(STDERR_FILENO, ".\n", 2);
+            free(aliases);
             exit(1);
         } else {
             char str[128];
@@ -257,6 +266,7 @@ int main(int argc, char *argv[]) {
         }
     } else {
         write(STDERR_FILENO, "Usage: mysh [batch-file]\n", 25);
+        free(aliases);
         exit(1);
     }
     fclose(fp1);

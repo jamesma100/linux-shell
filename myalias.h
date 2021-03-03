@@ -19,5 +19,4 @@ void print_list(struct linked_list*);
 struct node* insert_to_end(struct linked_list*, void*, void*);
 struct node* delete(struct linked_list*, void*);
 struct node* search(struct linked_list*, void*);
-
 #endif
