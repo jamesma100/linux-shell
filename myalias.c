@@ -19,7 +19,6 @@ void print_list(struct linked_list *list) {
 struct node* insert_to_end(struct linked_list *list, void *key, void *value) {
     struct node* new_node = (struct node*)malloc(sizeof(struct node));
     // initialize new node
-
     new_node->key = key;
     new_node->value = value;
     new_node->next = NULL;

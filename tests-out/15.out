@@ -1,3 +1,4 @@
-
-/bin/echo test variable whitespace!
+				
+		/bin/echo test	    variable	 whitespace!		 
+test variable whitespace!
 exit

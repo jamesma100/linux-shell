@@ -1,4 +1,4 @@
-making a new file > tests-out/tmp.txt
+/bin/echo making a new file > tests-out/tmp.txt
 /bin/cat tests-out/tmp.txt
-/bin/echo making a new file
+making a new file
 exit

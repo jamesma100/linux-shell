@@ -69,9 +69,7 @@ void handle_command(const char *user_command) {
                     write(STDOUT_FILENO, " ", 1);
                     write(STDOUT_FILENO, replace, strlen(replace));
                     write(STDOUT_FILENO, "\n", 1);
-                  //  free(replace);
                 }
-                free(dup_command);
                 return;
             }
             if (strcmp(argv_alias[0], "alias") == 0) {
@@ -151,7 +149,6 @@ void handle_command(const char *user_command) {
         if (start_of_filename == 0 && redirect_detected) {
             redirect_detected = false;
             write(STDERR_FILENO, "Redirection misformatted.\n", 26);
-            free(dup_command);
             return;
         }
         // redirect detected, so extract name of file and handle FDs
@@ -163,7 +160,6 @@ void handle_command(const char *user_command) {
             for (i = start_of_filename; i < strlen(dup_command); i++) {
                 if (dup_command[i] == ' ') {
                     write(STDERR_FILENO, "Redirection misformatted.\n", 26);
-                    free(dup_command);
                     return;
                 }
                 filename[i-start_of_filename] = dup_command[i];

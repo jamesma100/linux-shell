@@ -1,1 +1,1 @@
-./mysh tests/31.in | sort
+./mysh tests/31.in | sort --ignore-case

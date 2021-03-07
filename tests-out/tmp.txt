@@ -1,1 +1,1 @@
-/bin/echo hello there
+hello there
